@@ -175,7 +175,7 @@ class PluginCmdbCIType extends CommonDropdown {
          'id'            => '9',
          'table'         => $this->getTable(),
          'field'         => 'is_imported',
-         'name'          => __('is already present in GLPI', 'cmdb'),
+         'name'          => __('is already present in ITSM-NG', 'cmdb'),
          'datatype'      => 'bool',
          'massiveaction' => false
       ];
@@ -302,7 +302,7 @@ class PluginCmdbCIType extends CommonDropdown {
 
       } else {
          echo "<tr class='tab_bg_1'>";
-         echo "<td>" . __('Is this item presents in glpi ?', 'cmdb') . "</td>";
+         echo "<td>" . __('Is this item presents in itsm-ng ?', 'cmdb') . "</td>";
          echo "<td><input id='is_imported' onclick='checkboxAction()' type='checkbox' name='is_imported' value='1'/>";
          echo "</td></tr>\n";
          $this->showImportedItem($ID, $options);
