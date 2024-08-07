@@ -222,83 +222,86 @@ class PluginCmdbOperationprocess extends CommonDBTM {
     */
    function showForm($ID, $options = []) {
 
-      $this->initForm($ID, $options);
-      $this->showFormHeader($options);
-
-      echo "<tr class='tab_bg_1'>";
-
-      echo "<td>" . __('Name') . "</td>";
-      echo "<td>";
-      Html::autocompletionTextField($this, "name");
-      echo "</td>";
-      echo "<td>" . PluginCmdbOperationprocessState::getTypeName(1) . "</td>";
-      echo "<td>";
-      Dropdown::show('PluginCmdbOperationprocessState', ['name'  => "plugin_cmdb_operationprocessstates_id",
-                                                         'value' => $this->fields["plugin_cmdb_operationprocessstates_id"]
-      ]);
-      echo "</td>";
-
-      echo "</tr>";
-
-      echo "<tr class='tab_bg_1'>";
-
-      echo "<td>" . __('Location') . "</td>";
-      echo "<td>";
-      Location::dropdown(['value'  => $this->fields["locations_id"],
-                          'entity' => $this->fields["entities_id"]]);
-      echo "</td>";
-
-      echo "<td>" . __('Technician in charge of the hardware') . "</td><td>";
-      User::dropdown(['name'   => "users_id_tech",
-                      'value'  => $this->fields["users_id_tech"],
-                      'entity' => $this->fields["entities_id"],
-                      'right'  => 'interface']);
-      echo "</td>";
-
-      echo "</tr>";
-
-      echo "<tr class='tab_bg_1'>";
-
-      echo "<td>" . __('Group in charge of the hardware') . "</td><td>";
-      Group::dropdown(['name'      => 'groups_id_tech',
-                       'value'     => $this->fields['groups_id_tech'],
-                       'entity'    => $this->fields['entities_id'],
-                       'condition' => ['is_assign' => 1]]);
-      echo "</td>";
-
-      echo "<td>" . __('Associable to a ticket') . "</td><td>";
-      Dropdown::showYesNo('is_helpdesk_visible', $this->fields['is_helpdesk_visible']);
-      echo "</td>";
-
-      echo "</tr>";
-
-      echo "<tr class='tab_bg_1'>";
-
-      echo "<td class='center' colspan = '4'>";
-      printf(__('Last update on %s'), Html::convDateTime($this->fields["date_mod"]));
-      echo "</td>";
-
-      echo "</tr>";
-
-      echo "<tr class='tab_bg_1'>";
-
-      echo "<td colspan = '4'>";
-      echo "<table cellpadding='2' cellspacing='2' border='0'><tr><td>";
-      echo __('Comments') . "</td></tr>";
-      echo "<tr>";
-      echo "<td class='center'>";
-      Html::textarea(['name'              => 'comment',
-                      'cols'              => '100',
-                      'rows'              => '8',
-                      'value'             => $this->fields["comment"],
-                      'enable_richtext'   => false,
-                      'enable_fileupload' => false]);
-      echo "</td></tr></table>";
-      echo "</td>";
-
-      echo "</tr>";
-
-      $this->showFormButtons($options);
+      $form = [
+        'action'      => $this->getFormURL(),
+        'buttons'     => [
+            [
+                'name'   => $this->isNewID($ID) ? 'add' : 'update',
+                'value'  => $this->isNewID($ID) ? _sx('button', 'Add') : _sx('button', 'Save'),
+                'class' => 'btn btn-secondary',
+            ],
+            !$this->isDeleted() && $this->canDelete() && !$this->isNewID($ID) ? [
+                'name'   => 'delete',
+                'value'  => _sx('button', 'Delete'),
+                'class'  => 'btn btn-danger',
+            ] : ($this->isNewID($ID) && $this->isDeleted() && $this->canPurge() ? [
+                'name'   => 'purge',
+                'value'  => _sx('button', 'Purge'),
+                'class'  => 'btn btn-danger',
+            ] : []),
+            $this->isDeleted() && $this->canCreate() ? [
+                'name'   => 'restore',
+                'value'  => _sx('button', 'Restore'),
+                'class'  => 'btn btn-primary',
+            ] : [],
+        ],
+        'content' => [
+            $this->getTypeName() => [
+                'visible'    => true,
+                'inputs'    => [
+                    __('Name') => [
+                        'name'       => 'name',
+                        'type'       => 'text',
+                        'value'      => $this->fields['name'],
+                    ],
+                    PluginCmdbOperationprocessState::getTypeName(1) => [
+                        'name'       => 'plugin_cmdb_operationprocessstates_id',
+                        'type'       => 'select',
+                        'itemtype'   => PluginCmdbOperationprocessState::class,
+                        'value'      => $this->fields['plugin_cmdb_operationprocessstates_id'],
+                        'actions'    => getItemActionButtons(['info', 'add'], PluginCmdbOperationprocessState::class),
+                    ],
+                    __('Location') => [
+                        'name'       => 'locations_id',
+                        'type'       => 'select',
+                        'itemtype'   => Location::class,
+                        'value'      => $this->fields['locations_id'],
+                        'condition'  => ['entities_id' => $this->fields['entities_id']],
+                        'actions'    => getItemActionButtons(['info', 'add'], Location::class),
+                    ],
+                    __('Technician in charge of the hardware') => [
+                        'name'       => 'users_id_tech',
+                        'type'       => 'select',
+                        'value'      => $this->fields['users_id_tech'],
+                        'values'     => getOptionsForUsers('interface', ['entities_id' => $this->fields['entities_id']]),
+                    ],
+                    __('Group in charge of the hardware') => [
+                        'name'       => 'groups_id_tech',
+                        'type'       => 'select',
+                        'itemtype'   => Group::class,
+                        'value'      => $this->fields['groups_id_tech'],
+                        'condition'  => ['is_assign' => 1],
+                    ],
+                    __('Associable to a ticket') => [
+                        'name'       => 'is_helpdesk_visible',
+                        'type'       => 'checkbox',
+                        'value'      => $this->fields['is_helpdesk_visible'],
+                    ],
+                    sprintf(__('Last update on %s'), Html::convDateTime($this->fields["date_mod"])) => [
+                        'content'    => '',
+                    ],
+                    __('Comments') => [
+                        'name'       => 'comment',
+                        'type'       => 'textarea',
+                        'value'      => $this->fields['comment'],
+                        'col_lg'    => 12,
+                        'col_md'    => 12,
+                    ],
+                ]
+            ],
+        ]
+      ];
+      renderTwigForm($form, '', $this->fields);
 
       return true;
    }
