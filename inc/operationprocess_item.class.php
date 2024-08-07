@@ -226,7 +226,7 @@ class PluginCmdbOperationprocess_Item extends CommonDBRelation {
                                                ]);
          echo "</td>";
          echo "<td colspan='2' class='tab_bg_2'>";
-         echo "<input type='submit' name='additem' value=\"" . _sx('button', 'Add') . "\" class='submit'>";
+         echo "<input type='submit' name='additem' value=\"" . _sx('button', 'Add') . "\" class='btn btn-sm btn-secondary'>";
          echo "</td></tr>";
          echo "</table>";
          Html::closeForm();
@@ -235,26 +235,24 @@ class PluginCmdbOperationprocess_Item extends CommonDBRelation {
 
       echo "<div class='spaced'>";
       if ($canedit && $number) {
-         Html::openMassiveActionsForm('mass' . __CLASS__ . $rand);
-         $massiveactionparams = [];
+         $massiveactionparams = [
+            'container'      => 'mass' . __CLASS__ . $rand,
+            'display_arrow'  => false,
+         ];
          Html::showMassiveActions($massiveactionparams);
       }
-      echo "<table class='tab_cadre_fixe'>";
-      echo "<tr>";
-
-      if ($canedit && $number) {
-         echo "<th width='10'>" . Html::getCheckAllAsCheckbox('mass' . __CLASS__ . $rand) . "</th>";
-      }
-
-      echo "<th>" . __('Type') . "</th>";
-      echo "<th>" . __('Name') . "</th>";
+      $fields = [
+         'type'  => __('Type'),
+         'name'  => __('Name'),
+      ];
       if (Session::isMultiEntitiesMode()) {
-         echo "<th>" . __('Entity') . "</th>";
+         $fields['entity'] = __('Entity');
       }
-      echo "</tr>";
+      $values         = [];
+      $massive_action = [];
+      echo "<table class='tab_cadre_fixe'>";
 
       $dbu = new DbUtils();
-
       while ($data = $iterator->next()) {
          $itemType = $data["itemtype"];
 
@@ -327,32 +325,27 @@ class PluginCmdbOperationprocess_Item extends CommonDBRelation {
                   echo "<tr class='tab_bg_1'>";
 
                   if ($canedit) {
-                     echo "<td width='10'>";
-                     Html::showMassiveActionCheckBox(__CLASS__, $data["items_id"]);
-                     echo "</td>";
+                     $massive_action[$data["items_id"]] = sprintf('item[%s][%s]', self::class, $data["items_id"]);
                   }
-                  echo "<td class='center'>" . $item::getTypeName(1) . "</td>";
-
-                  echo "<td class='center' " . (isset($data['is_deleted']) && $data['is_deleted'] ? "class='tab_bg_2_2'" : "") .
-                       ">" . $name . "</td>";
+                  $newValue = [
+                     'type'  => $item::getTypeName(1),
+                     'name'  => $name,
+                  ];
 
                   if (Session::isMultiEntitiesMode()) {
-                     echo "<td class='center'>" . Dropdown::getDropdownName("glpi_entities", $data['entity']) . "</td>";
+                     $newValue['entity'] = Dropdown::getDropdownName("glpi_entities", $data['entity']);
                   }
-
-                  echo "</tr>";
+                  $values[$data["items_id"]] = $newValue;
                }
             }
+            renderTwigTemplate('table.twig', [
+                'id'         => 'mass' . __CLASS__ . $rand,
+                'fields'     => $fields,
+                'values'     => $values,
+                'massive_action'    => $massive_action,
+            ]);
          }
       }
-      echo "</table>";
-
-      if ($canedit && $number) {
-         $paramsma['ontop'] = false;
-         Html::showMassiveActions($paramsma);
-         Html::closeForm();
-      }
-      echo "</div>";
    }
 
    /**
