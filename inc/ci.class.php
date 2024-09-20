@@ -113,6 +113,12 @@ class PluginCmdbCI extends CommonDBTM {
     */
    function showForm($ID, $options = []) {
 
+      $form = [
+         'action'     => $this->getFormURL(),
+         'content'    => []
+      ];
+      renderTwigForm($form, '', $this->fields);
+
       $this->initForm($ID, $options);
       $options["colspan"] = 1;
       $this->showFormHeader($options);

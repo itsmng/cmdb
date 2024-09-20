@@ -282,50 +282,121 @@ class PluginCmdbCIType extends CommonDropdown {
          $this->check(-1, CREATE);
       }
 
-      $this->showFormHeader($options);
+      $tabCIType = self::getTypes();
 
-      if ($ID > 0) {
-         if ($this->fields["is_imported"]) {
-            $this->showImportedItem($ID, $options);
-         } else {
-            echo "<tr cellpadding='2' class='newItem tab_bg_1' style='display:none;'>";
-            echo "<td width='50%'>" . __('Name');
-            echo "</td>";
-            echo "<td width='50%'>";
-            echo "<input type=''text' value='".$this->fields['name']."' disabled>";
-            echo "</td>";
-            echo "</tr>";
-            $this->showExistingFields();
-            $this->showNewFields($ID);
-            echo "<script>checkboxAction();</script>";
-         }
-
-      } else {
-         echo "<tr class='tab_bg_1'>";
-         echo "<td>" . __('Is this item presents in itsm-ng ?', 'cmdb') . "</td>";
-         echo "<td><input id='is_imported' onclick='checkboxAction()' type='checkbox' name='is_imported' value='1'/>";
-         echo "</td></tr>\n";
-         $this->showImportedItem($ID, $options);
-         echo "<tr  cellpadding='2' class='newItem tab_bg_1' style='display:none;'>";
-         echo "<td width='50%'>" . __('Name') . "</td>";
-         echo "<td width='50%'>";
-         Html::autocompletionTextField($this, "name");
-         echo "<br><br><div class='warning'>
-                     <i class='fas fa-exclamation-triangle fa-2x'></i><br><br>";
-         echo __("Be careful the name cannot be changed after creation", "cmdb");
-         echo "<br>";
-         echo __("Do not use a plural classname (like 'myobjects')", "cmdb");
-         echo "<br>";
-         echo __("Do not use a classname with spaces (like 'my objects')", "cmdb");
-         echo "</div>";
-         echo "</td>";
-         echo "</tr>";
-         $this->showNewFields($ID);
-         echo "<script>checkboxAction();</script>";
+      $tabCIType2    = [];
+      $tabCIType2[0] = Dropdown::EMPTY_VALUE;
+      $dbu           = new DbUtils();
+      foreach ($tabCIType as $CIType) {
+         $ci                  = $dbu->getItemForItemtype($CIType);
+         $tabCIType2[$CIType] = $ci::getTypeName(1);
       }
 
-      $this->showFormButtons($options);
-
+      $form = [
+        'action' => $this->getFormURL(),
+        'itemtype' => $this->getType(),
+        'content' => [
+           $this->getTypeName() => [
+             'visible' => true,
+             'inputs' => $ID > 0
+                ? ($this->fields['is_imported']
+                   ? [
+                      '' => [
+                         'content' => $this->showImportedItem($ID, $options),
+                      ]
+                   ] : [
+                      '' => [
+                         'content' => $this->showExistingFields()
+                            . $this->showNewFields($ID)
+                            . "<script>checkboxAction();</script>",
+                      ]
+                   ])
+                : [
+                   __('Is this item presents in itsm-ng ?', 'cmdb') => [
+                      'type'    => 'checkbox',
+                      'value'   => $this->fields['is_imported'],
+                      'id'      => 'is_imported',
+                      'hooks' => [
+                          'change' => <<<JS
+                          $('#name').prop('disabled', this.checked);
+                          $('#name_warning').toggle(!this.checked);
+                          $('#selectCI').prop('disabled', !this.checked);
+                          $('#iconInput').prop('disabled', this.checked);
+                          if (this.checked) {
+                            $('.newItem').hide();
+                          } else {
+                            $('.newItem').show();
+                          }
+                          JS
+                      ],
+                   ],
+                   __('CI Type') => [
+                       'type' => 'select',
+                       'id' => 'selectCI',
+                       'name' => 'selectCI',
+                       'value' => $this->fields['name'],
+                       'values' => $tabCIType2,
+                       'hooks' => [
+                           'change' => <<<JS
+                              if (this.value == '0') {
+                                $('#iconCI').hide();
+                              } else {
+                                $('#iconCI').show();
+                              }
+                              JS
+                        ],
+                   ],
+                   __('Name') => [
+                      'id'      => 'name',
+                      'name'    => 'name',
+                      'type'    => 'text',
+                      'value'   => $this->fields['name'],
+                      'init' => <<<JS
+                         $('#name').prop('disabled', this.checked);
+                         $('#iconInput').prop('disabled', this.checked);
+                         $('#name_warning').toggle(!this.checked);
+                         $('#selectCI').prop('disabled', !this.checked);
+                      JS
+                   ],
+                   '' => [
+                      'content' => '
+                      <div class="warning" id="name_warning">
+                           <i class="fas fa-exclamation-triangle"></i><br>
+                           <span class="warning-text">
+                              '.__("Be careful the name cannot be changed after creation", "cmdb").'
+                           </span><br>
+                           <span class="warning-text">
+                              '.__("Do not use a plural classname (like 'myobjects')", "cmdb").'
+                           </span><br>
+                           <span class="warning-text">
+                              '.__("Do not use a classname with spaces (like 'my objects')", "cmdb").'
+                           </span><br>
+                      </div>
+                      ',
+                   ],
+                   __('Fields') => [
+                       'content' => (function() {
+                           ob_start();
+                           $this->showExistingFields();
+                           return ob_get_clean();
+                       })(),
+                       'col_lg' => 12,
+                       'col_md' => 12,
+                   ],
+                   ' ' => [
+                       'content' => (function() use ($ID) {
+                           ob_start();
+                           $this->showNewFields($ID);
+                           return ob_get_clean();
+                       })(),
+                       'col_lg' => 12,
+                       'col_md' => 12,
+                   ],
+                ]
+           ],
+        ],
+      ];
+      renderTwigForm($form, '', $this->fields);
       return true;
    }
 
@@ -935,38 +1006,16 @@ class PluginCmdbCIType extends CommonDropdown {
     */
    function showNewFields($ID) {
       global $CFG_GLPI;
-      echo "<tr class='newItem tab_bg_1' style='display:none;'>";
-      echo "<td colspan='2' class='center'><a class='vsubmit' 
-            onclick='addField(" . json_encode(self::$typeField) . ")'>" . __('Add New Field', 'cmdb') . "</a></td>";
-      echo "</tr>";
-
-      echo "<tr class='newItem tab_bg_1' style='display:none;'>";
-      echo "<td colspan='2' class='center'>";
+      echo "<div class='newItem tab_bg_1'>";
+      echo "<a class='btn btn-sm btn-secondary'
+            onclick='addField(" . json_encode(self::$typeField) . ")'>" . __('Add New Field', 'cmdb') . "</a>";
       echo "<table id='newfields' class='tab_cadre'>";
       echo "</table>";
-      echo "</td>";
-      echo "</tr>";
-      if ($ID > 0) {
-         $citype_doc = new PluginCmdbCIType_Document();
-         if ($citype_doc->getFromDBByCrit(['plugin_cmdb_citypes_id' => $ID,
-                                           'types_id'               => 0])) {
-
-            echo "<tr class='newItem tab_bg_1' style='display:none;'>";
-            echo "<td>" . __('Icon') . "</td>";
-            echo "<td>";
-            echo "<img width='32' height='32' src='" . $CFG_GLPI['root_doc'] .
-                 "/front/document.send.php?docid=" . $citype_doc->fields['documents_id'] . "'/>";
-            echo "</td>";
-            echo "</tr>";
-         }
-      }
-      echo "<tr class='newItem tab_bg_1' style='display:none;'>";
-      echo "<td>" . __('Upload icon', 'cmdb') . "</td>";
-      echo "<td>";
-
+      echo "</div>";
+      echo "<div class='newItem tab_bg_1' id='iconCI'>";
+      echo "<span>" . __('Upload icon', 'cmdb') . "</span>";
       echo Html::file();
-      echo "</td>";
-      echo "</tr>";
+      echo "</div>";
    }
 
    /**
@@ -986,16 +1035,14 @@ class PluginCmdbCIType extends CommonDropdown {
             foreach ($ciFields as $data) {
                $tabFieldsTmp[] = $data;
             }
-            echo "<tr class='newItem tab_bg_1' style='display:none;'>";
-            echo "<td class='center' colspan='2'>" . __('Existing fields for this type of CI', 'cmdb') . "</td>";
-            echo "</tr>";
-            echo "<tr class='newItem tab_bg_1' style='display:none;'>";
-            echo "<td colspan='2' class='center'><a class='vsubmit' 
-                    onclick='resetFields($id," . json_encode(self::$typeField) . ")'>" . __('Reset Existing fields', 'cmdb') . "</a></td>";
-            echo "</tr>";
-            echo "<tr class='newItem tab_bg_1' style='display:none;'>";
-            echo "<td colspan='2' class='center'>";
-
+            echo "<div class='newItem tab_bg_1'>";
+            echo "<span class='center' colspan='2'>" . __('Existing fields for this type of CI', 'cmdb') . "</span>";
+            echo "</div>";
+            echo "<div class='newItem tab_bg_1' style='display:none;'>";
+            echo "<a class='btn btn-sm btn-secondary'
+                    onclick='resetFields($id," . json_encode(self::$typeField) . ")'>" . __('Reset Existing fields', 'cmdb') . "</a>";
+            echo "</div>";
+            echo "<div class='newItem tab_bg_1'>";
             echo "<table id='fields' class='tab_cadre'>";
             echo "<tr class='tab_bg_2'>";
             echo "<th>" . __("Fields") . "</th>";
@@ -1016,8 +1063,7 @@ class PluginCmdbCIType extends CommonDropdown {
             }
             echo "</table>";
 
-            echo "</td>";
-            echo "</tr>";
+            echo "</div>";
          }
       }
    }

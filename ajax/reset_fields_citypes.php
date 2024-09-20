@@ -46,7 +46,7 @@ if ($_POST["action"] == "reset") {
             echo "<td>";
             Dropdown::showFromArray("typeField[$i]", $tabType, ["value" => $d['typefield'], "width" => 125]);
             echo "</td>";
-            echo "<i class='fa-2x fas fa-trash-alt pointer' onclick='deleteField($i);addHiddenDeletedField($i);'></i></td>";
+            echo "<i class='fas fa-trash-alt pointer' onclick='deleteField($i);addHiddenDeletedField($i);'></i></td>";
             echo "</tr>";
          }
       }
@@ -54,10 +54,10 @@ if ($_POST["action"] == "reset") {
 
 } else if ($_POST["action"] == "add") {
    echo "<tr class='tab_bg_2 center' id='" . $_POST['rows'] . "'>";
-   echo "<td><input type='text' required='required' name='nameNewField[]' value=''/></td>";
+   echo "<td><input type='text' class='form-control' required='required' name='nameNewField[]' value=''/></td>";
    echo "<td>";
    Dropdown::showFromArray("typeNewField[]", $tabType, ["width" => 125]);
    echo "</td>";
-   echo "<td><i class='fa-2x fas fa-trash-alt pointer'  onclick='deleteField(" . $_POST['rows'] . ");'></i></td>";
+   echo "<td><i class='fas fa-trash-alt pointer'  onclick='deleteField(" . $_POST['rows'] . ");'></i></td>";
    echo "</tr>";
 }

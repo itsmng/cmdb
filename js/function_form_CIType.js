@@ -19,11 +19,11 @@ function checkboxAction() {
    $(function () {
       if ($("#is_imported").is(':checked')) {
          $(".newItem").hide();
-         $("tr[name='importedItem']").each(function () {
+         $("div[name='importedItem']").each(function () {
             $(this).show();
          });
       } else {
-         $("tr[name='importedItem']").each(function () {
+         $("div[name='importedItem']").each(function () {
             $(this).hide();
          });
          $(".newItem").show();
@@ -34,7 +34,7 @@ function checkboxAction() {
 
 var resetFields = function (id, tabFieldsTmp,tabType) {
    console.log(tabFieldsTmp[0]['id']);
-   
+
    $("#fields tr.field").remove();
    $("#fields input[type='hidden']").remove();
    $.ajax({
