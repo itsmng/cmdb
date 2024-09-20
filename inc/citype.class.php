@@ -302,13 +302,31 @@ class PluginCmdbCIType extends CommonDropdown {
                 ? ($this->fields['is_imported']
                    ? [
                       '' => [
-                         'content' => $this->showImportedItem($ID, $options),
+                         'content' => (function() use ($ID) {
+                            ob_start();
+                            $this->showImportedItem($ID, $options);
+                            return ob_get_clean();
+                         })(),
                       ]
                    ] : [
+                      __('Fields') => [
+                         'content' => (function() use ($ID) {
+                            ob_start();
+                            $this->showExistingFields();
+                            return ob_get_clean();
+                         })(),
+                         'col_lg' => 12,
+                         'col_md' => 12,
+                      ],
                       '' => [
-                         'content' => $this->showExistingFields()
-                            . $this->showNewFields($ID)
-                            . "<script>checkboxAction();</script>",
+                         'content' => (function() use ($ID) {
+                            ob_start();
+                            $this->showNewFields($ID);
+                            echo "<script>checkboxAction();</script>";
+                            return ob_get_clean();
+                         })(),
+                         'col_lg' => 12,
+                         'col_md' => 12,
                       ]
                    ])
                 : [
@@ -1005,7 +1023,6 @@ class PluginCmdbCIType extends CommonDropdown {
     * Show new fields of a non imported type
     */
    function showNewFields($ID) {
-      global $CFG_GLPI;
       echo "<div class='newItem tab_bg_1'>";
       echo "<a class='btn btn-sm btn-secondary'
             onclick='addField(" . json_encode(self::$typeField) . ")'>" . __('Add New Field', 'cmdb') . "</a>";
@@ -1014,7 +1031,14 @@ class PluginCmdbCIType extends CommonDropdown {
       echo "</div>";
       echo "<div class='newItem tab_bg_1' id='iconCI'>";
       echo "<span>" . __('Upload icon', 'cmdb') . "</span>";
-      echo Html::file();
+      renderTwigTemplate('macros/input.twig', [
+         'type'        => 'imageUpload',
+         'name'        => 'filename[]',
+         'title'       => __('Upload icon', 'cmdb'),
+         'id'          => 'filename_' . $ID,
+         'noClear'     => true,
+         'accept'      => 'image/*',
+      ]);
       echo "</div>";
    }
 
@@ -1052,7 +1076,7 @@ class PluginCmdbCIType extends CommonDropdown {
             foreach ($tabFieldsTmp as $k => $d) {
                $i = $d['id'];
                echo "<tr class='tab_bg_2 center field' id='$i'>";
-               echo "<td><input type='text' required='required' name='nameField[" . $i . "]' value='" . $d['name'] . "'/></td>";
+               echo "<td><input type='text' class='form-control' required='required' name='nameField[" . $i . "]' value='" . $d['name'] . "'/></td>";
                echo "<td>";
                Dropdown::showFromArray("typeField[$i]", self::$typeField, ["value" => $d['typefield'], "width" => 125]);
 
