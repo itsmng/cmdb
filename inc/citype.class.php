@@ -1025,7 +1025,21 @@ class PluginCmdbCIType extends CommonDropdown {
    function showNewFields($ID) {
       global $DB, $CFG_GLPI;
 
-      $docId = iterator_to_array($DB->request('SELECT documents_id FROM glpi_plugin_cmdb_citypes_documents WHERE plugin_cmdb_citypes_id = ' . $ID))[0]['documents_id'];
+      $twig_vars = [
+         'type'        => 'imageUpload',
+         'name'        => 'files[]',
+         'title'       => __('Upload icon', 'cmdb'),
+         'id'          => 'filename_' . $ID,
+         'noClear'     => true,
+         'accept'      => 'image/*',
+      ];
+      if ($ID > 0) {
+          $docId = iterator_to_array($DB->request('SELECT documents_id FROM glpi_plugin_cmdb_citypes_documents WHERE plugin_cmdb_citypes_id = ' . $ID));
+          if (count($docId) > 0) {
+             $docId = empty($docId[0]['documents_id']) ? null : $docId[0]['documents_id'];
+             $twig_vars['docId'] = $docId;
+          }
+      }
       echo "<div class='newItem tab_bg_1'>";
       echo "<a class='btn btn-sm btn-secondary'
             onclick='addField(" . json_encode(self::$typeField) . ")'>" . __('Add New Field', 'cmdb') . "</a>";
@@ -1034,15 +1048,7 @@ class PluginCmdbCIType extends CommonDropdown {
       echo "</div>";
       echo "<div class='newItem tab_bg_1' id='iconCI'>";
       echo "<span>" . __('Upload icon', 'cmdb') . "</span>";
-      renderTwigTemplate('macros/input.twig', [
-         'type'        => 'imageUpload',
-         'name'        => 'files[]',
-         'title'       => __('Upload icon', 'cmdb'),
-         'docId'       => $docId,
-         'id'          => 'filename_' . $ID,
-         'noClear'     => true,
-         'accept'      => 'image/*',
-      ]);
+      renderTwigTemplate('macros/input.twig', $twig_vars);
       echo "</div>";
    }
 
