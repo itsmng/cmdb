@@ -591,7 +591,7 @@ class PluginCmdbCIType extends CommonDropdown {
 
       } else {
 
-         if (isset($this->input['_filename'])) {
+         if (isset($this->input['files'])) {
             $this->deleteIcons(0, $this->fields['id']);
             $img = $this->addIcons(0, 1, 0);
 
@@ -1023,6 +1023,9 @@ class PluginCmdbCIType extends CommonDropdown {
     * Show new fields of a non imported type
     */
    function showNewFields($ID) {
+      global $DB, $CFG_GLPI;
+
+      $docId = iterator_to_array($DB->request('SELECT documents_id FROM glpi_plugin_cmdb_citypes_documents WHERE plugin_cmdb_citypes_id = ' . $ID))[0]['documents_id'];
       echo "<div class='newItem tab_bg_1'>";
       echo "<a class='btn btn-sm btn-secondary'
             onclick='addField(" . json_encode(self::$typeField) . ")'>" . __('Add New Field', 'cmdb') . "</a>";
@@ -1033,8 +1036,9 @@ class PluginCmdbCIType extends CommonDropdown {
       echo "<span>" . __('Upload icon', 'cmdb') . "</span>";
       renderTwigTemplate('macros/input.twig', [
          'type'        => 'imageUpload',
-         'name'        => 'filename[]',
+         'name'        => 'files[]',
          'title'       => __('Upload icon', 'cmdb'),
+         'docId'       => $docId,
          'id'          => 'filename_' . $ID,
          'noClear'     => true,
          'accept'      => 'image/*',
@@ -1104,8 +1108,8 @@ class PluginCmdbCIType extends CommonDropdown {
       global $CFG_GLPI;
 
       if ($id == 0
-          && isset($this->input['_filename'])) {
-         $this->input['_filename$$' . $id] = $this->input['_filename'];
+          && isset($this->input['files'])) {
+         $this->input['_filename$$' . $id] = $this->input['files'];
       }
       if ($id == 0
           && isset($this->input['_tag_filename'])) {
@@ -1119,11 +1123,11 @@ class PluginCmdbCIType extends CommonDropdown {
       $docadded = [];
 
       foreach ($this->input['_filename$$' . $id] as $key => $file) {
+         $file = json_decode(stripslashes($file), true)[0];
          $doc     = new Document();
          $docitem = new Document_Item();
 
          $docID    = 0;
-         $filename = GLPI_TMP_DIR . "/" . $file;
          $input2   = [];
 
          //If file tag is present
@@ -1132,7 +1136,7 @@ class PluginCmdbCIType extends CommonDropdown {
          }
 
          // Check for duplicate
-         if ($doc->getFromDBbyContent($this->fields["entities_id"], $filename)) {
+         if ($doc->getFromDBbyContent($this->fields["entities_id"], $file['path'])) {
             if (!$doc->fields['is_blacklisted']) {
                $docID = $doc->fields["id"];
             }
@@ -1143,13 +1147,11 @@ class PluginCmdbCIType extends CommonDropdown {
             }
          } else {
             //TRANS: Default document to files attached to tickets : %d is the ticket id
-            $input2["name"]                    = addslashes(sprintf(__('Icon CIType %d', 'cmdb'), $this->getID()));
-            $input2["entities_id"]             = $this->fields["entities_id"];
-            $input2["documentcategories_id"]   = $CFG_GLPI["documentcategories_id_forticket"];
-            $input2["_only_if_upload_succeed"] = 1;
-            $input2["entities_id"]             = $this->fields["entities_id"];
-            $input2["_filename"]               = [$file];
-            $docID                             = $doc->add($input2);
+            $name                    = addslashes(sprintf(__('Icon CIType %d', 'cmdb'), $this->getID()));
+            $file["entities_id"]             = $this->fields["entities_id"];
+            $file["documentcategories_id"]   = $CFG_GLPI["documentcategories_id_forticket"];
+            $doc = ItsmngUploadHandler::addFileToDb($file, $name);
+            $docID = $doc->getID();
          }
 
          if ($docID > 0) {
