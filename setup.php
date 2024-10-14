@@ -22,7 +22,7 @@
  --------------------------------------------------------------------------
  */
 
-define('PLUGIN_CMDB_VERSION', '2.3.0');
+define('PLUGIN_CMDB_VERSION', '3.0.0');
 
 if (!defined("PLUGINCMDB_DIR")) {
    define("PLUGINCMDB_DIR", GLPI_ROOT . "/plugins/cmdb");
