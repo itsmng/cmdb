@@ -333,6 +333,7 @@ class PluginCmdbCIType extends CommonDropdown {
                    __('Is this item presents in itsm-ng ?', 'cmdb') => [
                       'type'    => 'checkbox',
                       'value'   => $this->fields['is_imported'],
+                      'name'    => 'is_imported',
                       'id'      => 'is_imported',
                       'hooks' => [
                           'change' => <<<JS
