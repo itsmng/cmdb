@@ -53,24 +53,26 @@ function plugin_init_cmdb() {
    global $PLUGIN_HOOKS, $CFG_GLPI;
 
    $PLUGIN_HOOKS['csrf_compliant']['cmdb']   = true;
-   $PLUGIN_HOOKS['change_profile']['cmdb']   = ['PluginCmdbProfile', 'initProfile'];
+   $PLUGIN_HOOKS['change_profile']['cmdb']   = [PluginCmdbProfile::class, 'initProfile'];
    $PLUGIN_HOOKS['assign_to_ticket']['cmdb'] = true;
    include_once(PLUGINCMDB_DIR . "/inc/autoload.php");
    $plugincmdb_autoloader = new PluginCmdbAutoloader([PLUGINCMDB_CLASS_PATH]);
    $plugincmdb_autoloader->register();
 
-   Plugin::registerClass('PluginCmdbProfile', ['addtabon' => ['Profile']]);
-   Plugin::registerClass('PluginCmdbCIType_Document');
-   Plugin::registerClass('PluginCmdbOperationprocess', ['ticket_types'           => true,
-                                                        'helpdesk_visible_types' => true]);
-   Plugin::registerClass('PluginCmdbCmdb_Ticket', ['addtabon' => 'Ticket']);
-   Plugin::registerClass('PluginCmdbCriticity', ['addtabon' => ['BusinessCriticity']]);
+   Plugin::registerClass(PluginCmdbProfile::class, ['addtabon' => [Profile::class]]);
+   Plugin::registerClass(PluginCmdbCIType_Document::class);
+   Plugin::registerClass(PluginCmdbOperationprocess::class, [
+      'ticket_types'           => true,
+      'helpdesk_visible_types' => true
+   ]);
+   Plugin::registerClass(PluginCmdbCmdb_Ticket::class, ['addtabon' => Ticket::class]);
+   Plugin::registerClass(PluginCmdbCriticity::class, ['addtabon' => [BusinessCriticity::class]]);
 
    if (Session::getLoginUserID()) {
 
-      $PLUGIN_HOOKS['plugin_fields']['cmdb'] = 'PluginCmdbOperationprocess';
+      $PLUGIN_HOOKS['plugin_fields']['cmdb'] = PluginCmdbOperationprocess::class;
 
-      $CFG_GLPI['impact_asset_types']['PluginCmdbOperationprocess'] = "plugins/cmdb/pics/service.png";
+      $CFG_GLPI['impact_asset_types'][PluginCmdbOperationprocess::class] = "plugins/cmdb/pics/service.png";
 
 
       //      $CFG_GLPI['impact_asset_types']['PluginCmdbCI'] = "plugins/cmdb/client.png";
@@ -89,7 +91,7 @@ function plugin_init_cmdb() {
                                              "/plugins/cmdb/js/function_form_CIType.js",
                                              "/plugins/cmdb/js/show_fields.js"];
 
-      $PLUGIN_HOOKS['post_item_form']['cmdb'] = ['PluginCmdbCriticity', 'addFieldCriticity'];
+      $PLUGIN_HOOKS['post_item_form']['cmdb'] = [PluginCmdbCriticity::class, 'addFieldCriticity'];
 
       if (preg_match_all("/.*\/(.*)\.form\.php/", $_SERVER['REQUEST_URI'], $matches) !== false) {
 
@@ -113,13 +115,13 @@ function plugin_init_cmdb() {
          }
       }
 
-      if (class_exists("PluginCmdbOperationprocess")
+      if (class_exists(PluginCmdbOperationprocess::class)
           && PluginCmdbOperationprocess::canView()) {
-         $PLUGIN_HOOKS['menu_toadd']['cmdb']['assets'] = ['PluginCmdbOperationprocessMenu'];
+         $PLUGIN_HOOKS['menu_toadd']['cmdb']['assets'] = [PluginCmdbOperationprocessMenu::class];
       }
-      if (class_exists("PluginCmdbCmdb")
+      if (class_exists(PluginCmdbCmdb::class)
           && PluginCmdbCmdb::canView()) {
-         $PLUGIN_HOOKS['menu_toadd']['cmdb']['plugins'] = ['PluginCmdbMenu'];
+         $PLUGIN_HOOKS['menu_toadd']['cmdb']['plugins'] = [PluginCmdbMenu::class];
       }
 
       $PLUGIN_HOOKS['post_init']['cmdb'] = 'plugin_cmdb_postinit';
