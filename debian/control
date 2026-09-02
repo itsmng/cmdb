@@ -1,0 +1,12 @@
+Source: cmdb
+Section: web
+Priority: standard
+Maintainer: ITSMng SysAdmin <sysadmin@itsm-ng.com>
+Build-Depends:	debhelper (>= 9)
+Rules-Requires-Root: no
+Homepage: https://github.com/itsmng/cmdb
+
+Package: itsm-ng-plugin-cmdb
+Architecture: all
+Depends: itsm-ng (>= 1:2.0),
+Description: The Configuration Management DataBase (abbreviated CMDB), or configuration management database, is a database unifying the components of a computer system. It makes it possible to understand the organization between them and to modify their configuration.
